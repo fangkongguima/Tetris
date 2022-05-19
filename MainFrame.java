@@ -1,25 +1,103 @@
-import javafx.scene.media.AudioClip;
-import java.io.File;
-import javafx.scene.media.AudioClip;
-import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.awt.image.BufferedImage;
-import java.io.File;
-import java.util.ArrayList;
+import java.util.Random;
 
 public class MainFrame extends JFrame implements KeyListener {
 
-    //the game has 21 rows and 22 columns
+    //the game has 21 rows and 26 columns
     private static final int gameRow = 21;
-    private static final int gameColumn = 22;
+    private static final int gameColumn = 26;
     //create a textarea
     private static JTextArea[][] text;
     //create two-dimensional array
     private int[][] data;
     //storage all the shapes in the int[] array
+    private final int shapes[][][] = new int[][][]{
+            //T的四种形态
+            {
+                    {0,1,0,0, 1,1,1,0, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 1,1,0,0, 0,1,0,0, 0,0,0,0},
+                    {1,1,1,0, 0,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 0,1,1,0, 0,1,0,0, 0,0,0,0}
+            },
+            //Line
+            {
+                    {0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 0,1,0,0, 0,1,0,0, 0,1,0,0},
+                    {0,0,0,0, 1,1,1,1, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 0,1,0,0, 0,1,0,0, 0,1,0,0}
+            },
+            //S
+            {
+                    {0,1,1,0, 1,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {1,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,0,0},
+                    {0,1,1,0, 1,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {1,0,0,0, 1,1,0,0, 0,1,0,0, 0,0,0,0}
+            },
+            //Z
+            {
+                    {1,1,0,0, 0,1,1,0, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 1,1,0,0, 1,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 0,1,1,0, 0,0,0,0, 0,0,0,0},
+                    {0,1,0,0, 1,1,0,0, 1,0,0,0, 0,0,0,0}
+            },
+            //倒L
+            {
+                    {0,1,0,0, 0,1,0,0, 1,1,0,0, 0,0,0,0},
+                    {1,1,1,0, 0,0,1,0, 0,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 1,0,0,0, 1,0,0,0, 0,0,0,0},
+                    {1,0,0,0, 1,1,1,0, 0,0,0,0, 0,0,0,0}
+            },
+            //L
+            {
+                    {1,0,0,0, 1,0,0,0, 1,1,0,0, 0,0,0,0},
+                    {0,0,1,0, 1,1,1,0, 0,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 0,1,0,0, 0,1,0,0, 0,0,0,0},
+                    {1,1,1,0, 1,0,0,0, 0,0,0,0, 0,0,0,0}
+            },
+            //square
+            {
+                    {1,1,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0},
+                    {1,1,0,0, 1,1,0,0, 0,0,0,0, 0,0,0,0}
+            }
+    };
+    private int rowRect = 4;
+    private int colRect = 4;
+    private int RectWidth = 20;
+
+    private Timer timer;
+    private int score = 0;//记录成绩
+    Random random = new Random();
+    private int curShapeType = -1;
+    private int curShapeState = -1;//设置当前的形状类型和当前的形状状态
+    private int nextShapeType = -1;
+    private int nextShapeState = -1;//设置下一次出现的方块组的类型和状态
+
+    private int posx = 0;
+    private int posy = 0;
+
+    public void CreateRect()//创建方块---如果当前的方块类型和状态都存在就设置下一次的，如果不存在就设置当前的并且设置下一次的状态和类型
+    {
+        if(curShapeType == -1 && curShapeState == -1)//当前的方块状态都为1，表示游戏才开始
+        {
+            curShapeType = random.nextInt(shapes.length);
+            curShapeState = random.nextInt(shapes[0].length);
+        }
+        else
+        {
+            curShapeType = nextShapeType;
+            curShapeState = nextShapeState;
+        }
+        nextShapeType = random.nextInt(shapes.length);
+        nextShapeState = random.nextInt(shapes[0].length);
+        posx = 0;
+        posy = 1;//墙的左上角创建方块
+    }
+
     //allShapes = new int[] {, };
     //show the game state
     private JLabel gameState;
@@ -27,39 +105,34 @@ public class MainFrame extends JFrame implements KeyListener {
     private JLabel gameScore;
     //judge running
     private static boolean judgeRun;
-
-
-    public void MusicPlay() {
-        AudioClip audioClip;
-        audioClip = new AudioClip(new File("E:\\学习资料\\Java\\Java code\\exercise\\project\\src\\Tetris Background Music.mp3").toURI().toString());
-        audioClip.play();   //开始播放
-        audioClip.setCycleCount(1000); //设置循环次数
-    }
-
-    public MainFrame () {
-        text = new JTextArea[gameRow][gameColumn];
-        data = new int[gameRow][gameColumn];
-        gameState = new JLabel("Game State: Playing");
-        gameScore = new JLabel("Game Score: 0 points");
-        judgeRun = true;
-        initiatePanel();
-        initiateFrame();
-        initialExplanationPanel();
-        MusicPlay();
-    }
+    //储存方块变量
+    int rect;
 
     public void initiateFrame() {
         //initiateFrame title
         this.setTitle("Tetris");
-        //make the frame middle
-        this.pack();
-        this.setLocationRelativeTo(null);
         //set to release the frame
         this.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //Set the window size to be variable
         this.setResizable(false);
         //frame size
-        setSize(1500, 960);
+        setSize(1200, 800);
+        //make the frame middle
+        this.setLocationRelativeTo(null);
+
+       /*
+        Toolkit kit = Toolkit.getDefaultToolkit();
+        Dimension screenSize = kit.getScreenSize();
+        int screenWidth = screenSize.width;
+        int screenHeight = screenSize.height;
+        int height = this.getHeight();
+        int width = this.getWidth();
+        setLocation(screenWidth/2-width/2,screenHeight/2-height/2);
+        */
+
+
+        //close the frame
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         //make it visible
         setVisible(true);
     }
@@ -71,13 +144,14 @@ public class MainFrame extends JFrame implements KeyListener {
         JPanel explanation_left = new JPanel();
         explanation_left.setLayout(new GridLayout(2,1));
 
-        //add the control way on the right
+//      add the control way on the right
         explanation_right.add(new JLabel(" Move Left: 'A' or 'LEFT'"));
         explanation_right.add(new JLabel(" Move Right: 'D' or 'RIGHT'"));
         explanation_right.add(new JLabel(" Move Down: 'S' or 'DOWN'"));
         explanation_right.add(new JLabel( " Rotate Clockwise: 'W' or 'UP'"));
-        explanation_left.setBackground(Color.BLACK);
-        explanation_right.setBackground(Color.BLACK);
+//        explanation_right.add(operation);
+        explanation_left.setBackground(Color.WHITE);
+        explanation_right.setBackground(Color.WHITE);
         for (int i = 0; i < 4; i++) {
             explanation_right.getComponent(i).setForeground(Color.white);
             explanation_right.getComponent(i).setFont(new Font("Verdana", Font.BOLD + Font.ITALIC, 16));
@@ -97,13 +171,24 @@ public class MainFrame extends JFrame implements KeyListener {
         this.add(explanation_left,BorderLayout.EAST);
 
         //add the explanation_right to the right of frame
-        this.add(explanation_right,BorderLayout.WEST);
+//        this.add(explanation_right,BorderLayout.WEST);
+    }
+
+    public MainFrame () {
+        text = new JTextArea[gameRow][gameColumn];
+        data = new int[gameRow][gameColumn];
+        gameState = new JLabel("Game State: Playing");
+        gameScore = new JLabel("Game Score: 0 points");
+        judgeRun = true;
+        initiatePanel();
+        initiateFrame();
+        initialExplanationPanel();
     }
 
     private void initiatePanel() {
         //TODO: more about initiate
         JPanel gameArea = new JPanel();
-        gameArea.setLayout(new GridLayout(gameRow, gameColumn, 1, 1));
+        gameArea.setLayout(new GridLayout(gameRow, gameColumn, 2, 2));
         //初始化游戏面板
         for (int i = 0; i < text.length; i++) {
             for (int j = 0; j < text[i].length; j++) {
@@ -115,8 +200,11 @@ public class MainFrame extends JFrame implements KeyListener {
                 text[i][j].addKeyListener(this);
                 //initialize game boundaries
                 if (j == 0 || j == text[i].length-1 || i == text.length-1) {
-                    text[i][j].setBackground(Color.cyan);
+                    text[i][j].setBackground(Color.black);
                     data[i][j] = 1;
+                }
+                if (i == 0 || i ==1 || i ==2 || i ==3){
+                    text[i][j].setBackground(Color.black);
                 }
                 //set the text field to uneditable
                 text[i][j].setEditable(false);
@@ -131,6 +219,9 @@ public class MainFrame extends JFrame implements KeyListener {
 
     public static void main(String[] args) {
         MainFrame mainFrame = new MainFrame();
+        String filepath = "E:\\学习资料\\Java\\Java code\\exercise\\project\\src\\Tetris Background Music.wav";
+        Music musicObject = new Music();
+        musicObject.playMusic(filepath);
     }
 
     public void gameStart() {
@@ -143,7 +234,7 @@ public class MainFrame extends JFrame implements KeyListener {
             }
         }
         gameState.setText("Game State: Game Over");
-        gameState.setFont(new Font ("Verdana", Font.PLAIN, 18));
+        gameState.setFont(new Font ("Verdana", Font.BOLD + Font.PLAIN, 18));
     }
 
 //    public void generate() {
@@ -171,14 +262,15 @@ public class MainFrame extends JFrame implements KeyListener {
         repaint();
     }
 
+    /*  private static JPanel initiatePanel(Tuple size, Color color) {
+        JPanel panel = new JPanel();
+        panel.setSize(size.x, size.y);
+        panel.setBackground(color);
+        //TODO: panel.setMore...
+        return panel;
+    }
 
-//    private static JPanel initiatePanel(Tuple size, Color color) {
-//        JPanel panel = new JPanel();
-//        panel.setSize(size.x, size.y);
-//        panel.setBackground(color);
-//        //TODO: panel.setMore...
-//        return panel;
-//    }
+     */
 
 
     @Override
